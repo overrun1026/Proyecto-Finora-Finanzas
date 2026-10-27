@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#10130f">
+    <title>Finanzas Personales</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="script.js" defer></script>
+</head>
+<body>
+    <div class="app-shell">
+        <aside class="sidebar">
+            <a class="brand" href="#" data-page="dashboard">
+                <span class="brand-icon">F</span>
+                <span>finora<span class="brand-dot">.</span></span>
+            </a>
+
+            <div class="sidebar-label">MENÚ PRINCIPAL</div>
+            <nav class="navigation">
+                <button class="nav-item active" data-page="dashboard">
+                    <span>◫</span> Dashboard
+                </button>
+                <button class="nav-item" data-page="transactions">
+                    <span>↕</span> Transacciones
+                </button>
+                <button class="nav-item" data-page="budgets">
+                    <span>▤</span> Presupuestos
+                </button>
+                <button class="nav-item" data-page="savings">
+                    <span>◎</span> Metas de ahorro
+                </button>
+                <button class="nav-item" data-page="reports">
+                    <span>▥</span> Informes
+                </button>
+                <button class="nav-item" data-page="categories">
+                    <span>▦</span> Categorías
+                </button>
+            </nav>
+
+            <div class="sidebar-bottom">
+                <div class="connection-indicator">
+                    <span class="status-dot"></span>
+                    <span id="connection-status">Conectando con API...</span>
+                </div>
+                <div class="sidebar-footer">FINANZAS PERSONALES</div>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <header class="topbar">
+                <div>
+                    <div class="eyebrow">TU ESPACIO FINANCIERO</div>
+                    <h1 id="page-title">Dashboard</h1>
+                </div>
+                <div class="topbar-actions">
+                    <span class="current-date" id="current-date"></span>
+                    <button class="button button-primary" id="quick-add">
+                        <span>＋</span> Nuevo movimiento
+                    </button>
+                </div>
+            </header>
+
+            <div id="notification" class="notification hidden" role="status"></div>
+
+            <section id="page-dashboard" class="page active">
+                <div class="welcome-row">
+                    <div>
+                        <h2>Tu resumen financiero</h2>
+                        <p>Una visión clara de cómo se mueve tu dinero.</p>
+                    </div>
+                    <div class="filter-inline">
+                        <label for="dashboard-year">Año del informe</label>
+                        <select id="dashboard-year"></select>
+                    </div>
+                </div>
+
+                <div class="stats-grid">
+                    <article class="stat-card">
+                        <div class="stat-top">
+                            <span>Ingresos</span>
+                            <span class="stat-icon green">↗</span>
+                        </div>
+                        <div class="stat-value" id="total-income">$0</div>
+                        <div class="stat-caption">Ingresos registrados</div>
+                    </article>
+                    <article class="stat-card">
+                        <div class="stat-top">
+                            <span>Gastos</span>
+                            <span class="stat-icon red">↘</span>
+                        </div>
+                        <div class="stat-value" id="total-expenses">$0</div>
+                        <div class="stat-caption">Gastos registrados</div>
+                    </article>
+                    <article class="stat-card">
+                        <div class="stat-top">
+                            <span>Balance</span>
+                            <span class="stat-icon green">◈</span>
+                        </div>
+                        <div class="stat-value" id="total-balance">$0</div>
+                        <div class="stat-caption">Ingresos menos gastos</div>
+                    </article>
+                    <article class="stat-card">
+                        <div class="stat-top">
+                            <span>Movimientos</span>
+                            <span class="stat-icon neutral">↔</span>
+                        </div>
+                        <div class="stat-value" id="transaction-count">0</div>
+                        <div class="stat-caption">Operaciones registradas</div>
+                    </article>
+                </div>
+
+                <div class="dashboard-grid">
+                    <article class="panel chart-panel">
+                        <div class="panel-heading">
+                            <div>
+                                <h3>Flujo financiero</h3>
+                                <p>Ingresos y gastos por mes</p>
+                            </div>
+                            <span class="panel-badge">COP</span>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="monthly-chart"></canvas>
+                        </div>
+                    </article>
+
+                    <article class="panel chart-panel">
+                        <div class="panel-heading">
+                            <div>
+                                <h3>Distribución de gastos</h3>
+                                <p>Gastos agrupados por categoría</p>
+                            </div>
+                        </div>
+                        <div class="chart-container doughnut-container">
+                            <canvas id="category-chart"></canvas>
+                        </div>
+                        <div id="category-legend" class="category-legend"></div>
+                    </article>
+                </div>
+
+                <article class="panel">
+                    <div class="panel-heading">
+                        <div>
+                            <h3>Movimientos recientes</h3>
+                            <p>Tus últimas transacciones registradas</p>
+                        </div>
+                        <button class="button button-secondary" data-page="transactions">
+                            Ver todas
+                        </button>
+                    </div>
+                    <div id="recent-transactions" class="table-wrapper">
+                        <p class="empty-state">Cargando movimientos...</p>
+                    </div>
+                </article>
+
+                <div class="dashboard-grid secondary-grid">
+                    <article class="panel">
+                        <div class="panel-heading">
+                            <div>
+                                <h3>Presupuestos del mes</h3>
+                                <p>Seguimiento de tus límites de gasto</p>
+                            </div>
+                            <button class="text-button" data-page="budgets">Ver todos</button>
+                        </div>
+                        <div id="dashboard-budgets"></div>
+                    </article>
+                    <article class="panel">
+                        <div class="panel-heading">
+                            <div>
+                                <h3>Metas de ahorro</h3>
+                                <p>Tu progreso hacia cada objetivo</p>
+                            </div>
+                            <button class="text-button" data-page="savings">Ver todas</button>
+                        </div>
+                        <div id="dashboard-savings"></div>
+                    </article>
+                </div>
+            </section>
+
+            <section id="page-transactions" class="page">
+                <div class="section-heading">
+                    <div>
+                        <h2>Transacciones</h2>
+                        <p>Administra tus ingresos y gastos.</p>
+                    </div>
+                    <button class="button button-primary" id="add-transaction">
+                        ＋ Añadir transacción
+                    </button>
+                </div>
+
+                <form id="transaction-filters" class="panel filters-grid">
+                    <div class="form-field">
+                        <label for="filter-kind">Tipo</label>
+                        <select id="filter-kind">
+                            <option value="">Todos</option>
+                            <option value="income">Ingresos</option>
+                            <option value="expense">Gastos</option>
+                        </select>
+                    </div>
+                    <div class="form-field">
+                        <label for="filter-category">Categoría</label>
+                        <select id="filter-category">
+                            <option value="">Todas</option>
+                        </select>
+                    </div>
+                    <div class="form-field">
+                        <label for="filter-from">Desde</label>
+                        <input id="filter-from" type="date">
+                    </div>
+                    <div class="form-field">
+                        <label for="filter-to">Hasta</label>
+                        <input id="filter-to" type="date">
+                    </div>
+                    <div class="form-field">
+                        <label for="filter-min">Monto mínimo</label>
+                        <input id="filter-min" type="number" min="0" step="0.01">
+                    </div>
+                    <div class="form-field">
+                        <label for="filter-max">Monto máximo</label>
+                        <input id="filter-max" type="number" min="0" step="0.01">
+                    </div>
+                    <div class="filter-actions">
+                        <button class="button button-primary" type="submit">Filtrar</button>
+                        <button class="button button-secondary" id="clear-filters" type="button">Limpiar</button>
+                    </div>
+                </form>
+
+                <article class="panel">
+                    <div id="transactions-table" class="table-wrapper">
+                        <p class="empty-state">Cargando transacciones...</p>
+                    </div>
+                </article>
+            </section>
+
+            <section id="page-budgets" class="page">
+                <div class="section-heading">
+                    <div>
+                        <h2>Presupuestos</h2>
+                        <p>Controla cuánto planeas gastar cada mes.</p>
+                    </div>
+                    <button class="button button-primary" id="add-budget">＋ Crear presupuesto</button>
+                </div>
+                <div class="panel filters-grid compact-filters">
+                    <div class="form-field">
+                        <label for="budget-year">Año</label>
+                        <select id="budget-year"></select>
+                    </div>
+                    <div class="form-field">
+                        <label for="budget-month">Mes</label>
+                        <select id="budget-month">
+                            <option value="">Todos los meses</option>
+                            <option value="1">Enero</option>
+                            <option value="2">Febrero</option>
+                            <option value="3">Marzo</option>
+                            <option value="4">Abril</option>
+                            <option value="5">Mayo</option>
+                            <option value="6">Junio</option>
+                            <option value="7">Julio</option>
+                            <option value="8">Agosto</option>
+                            <option value="9">Septiembre</option>
+                            <option value="10">Octubre</option>
+                            <option value="11">Noviembre</option>
+                            <option value="12">Diciembre</option>
+                        </select>
+                    </div>
+                    <div class="filter-actions">
+                        <button class="button button-primary" id="apply-budget-filters">Consultar</button>
+                    </div>
+                </div>
+                <div id="budgets-list" class="cards-grid"></div>
+            </section>
+
+            <section id="page-savings" class="page">
+                <div class="section-heading">
+                    <div>
+                        <h2>Metas de ahorro</h2>
+                        <p>Convierte tus objetivos en planes concretos.</p>
+                    </div>
+                    <button class="button button-primary" id="add-goal">＋ Nueva meta</button>
+                </div>
+                <div id="savings-list" class="cards-grid"></div>
+            </section>
+
+            <section id="page-reports" class="page">
+                <div class="section-heading">
+                    <div>
+                        <h2>Informes</h2>
+                        <p>Analiza tus ingresos, gastos y balance.</p>
+                    </div>
+                    <div class="form-field report-year-field">
+                        <label for="report-year">Año</label>
+                        <select id="report-year"></select>
+                    </div>
+                </div>
+                <div class="stats-grid report-stats">
+                    <article class="stat-card">
+                        <div class="stat-top"><span>Ingresos del año</span><span class="stat-icon green">↗</span></div>
+                        <div class="stat-value" id="report-income">$0</div>
+                    </article>
+                    <article class="stat-card">
+                        <div class="stat-top"><span>Gastos del año</span><span class="stat-icon red">↘</span></div>
+                        <div class="stat-value" id="report-expenses">$0</div>
+                    </article>
+                    <article class="stat-card">
+                        <div class="stat-top"><span>Balance del año</span><span class="stat-icon green">◈</span></div>
+                        <div class="stat-value" id="report-balance">$0</div>
+                    </article>
+                </div>
+                <article class="panel chart-panel report-chart">
+                    <div class="panel-heading">
+                        <div><h3>Comparativa mensual</h3><p>Ingresos, gastos y balance</p></div>
+                    </div>
+                    <div class="chart-container"><canvas id="report-monthly-chart"></canvas></div>
+                </article>
+                <article class="panel">
+                    <div class="panel-heading">
+                        <div><h3>Gastos por categoría</h3><p>Distribución en el periodo seleccionado</p></div>
+                    </div>
+                    <div id="report-category-table" class="table-wrapper"></div>
+                </article>
+            </section>
+
+            <section id="page-categories" class="page">
+                <div class="section-heading">
+                    <div>
+                        <h2>Categorías</h2>
+                        <p>Organiza tus ingresos y gastos.</p>
+                    </div>
+                    <button class="button button-primary" id="add-category">＋ Nueva categoría</button>
+                </div>
+                <article class="panel">
+                    <div id="categories-table" class="table-wrapper"></div>
+                </article>
+            </section>
+
+            <footer class="main-footer">
+                <span>Finora <span class="brand-dot">.</span></span>
+                <span>Creado por Leonardo Gracia</span>
+            </footer>
+        </main>
+    </div>
+
+    <dialog id="app-dialog" class="app-dialog">
+        <div class="dialog-header">
+            <div>
+                <div class="eyebrow">GESTIÓN FINANCIERA</div>
+                <h2 id="dialog-title">Nuevo registro</h2>
+            </div>
+            <button type="button" id="dialog-close" class="icon-button" aria-label="Cerrar">✕</button>
+        </div>
+        <form id="dialog-form">
+            <div id="dialog-fields" class="dialog-fields"></div>
+            <div class="dialog-actions">
+                <button type="button" id="dialog-cancel" class="button button-secondary">Cancelar</button>
+                <button type="submit" id="dialog-submit" class="button button-primary">Guardar</button>
+            </div>
+        </form>
+    </dialog>
+</body>
+</html>
